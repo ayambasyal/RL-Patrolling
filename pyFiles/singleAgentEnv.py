@@ -103,12 +103,13 @@ class GraphEnv(Env):
         return (self.step_now)
     
     def temp_render(self,episode):
-        nx.draw(self.g_env, self.node_positions,node_size=80)
+        nx.draw(self.g_env, self.node_positions,node_size=250)
 #         print(self.state)
+        nx.draw_networkx_labels(self.g_env, self.node_positions,labels = self.node_inv_dict,font_color='black' )
         x,y = self.node_positions[str(self.state)]
 #         print(x,y)
         filename = f"images/plot_{episode}_{self.step_now}.png"
-        plt.scatter(x, y, s=150, c='red')
+        plt.scatter(x, y, s=350, c='red')
         plt.savefig(filename)
         plt.show()
     
