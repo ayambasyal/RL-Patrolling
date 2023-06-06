@@ -122,12 +122,12 @@ class CustomEnvironment(ParallelEnv):
                 temp_neighbours.append(neighbour)
     
             if actions[agent] < len([i for i in self.g_env.neighbors(self.state[agent])]):
-                rewards[agent] = -4;
+                rewards[agent] = -6;
                 self.state[agent] = temp_neighbours[actions[agent]]
                 self.step_now += 1
 
             elif actions[agent] == len([i for i in self.g_env.neighbors(self.state[agent])]):
-                rewards[agent] = -2;
+                rewards[agent] = -3;
 #                 print('no move action')
                 self.step_now += 1
             else:
@@ -145,7 +145,7 @@ class CustomEnvironment(ParallelEnv):
         if(police_state == thief_state):
             terminations = {a:True for a in self.possible_agents}
 #             print('reward provided')
-            rewards['player_1'] += 200
+            rewards['player_1'] += 70
 
         # Get dummy infos (not used in this example)
         infos = {a: {} for a in self.possible_agents}
@@ -184,9 +184,9 @@ class CustomEnvironment(ParallelEnv):
         
         filename = f"images/Multi_{episode}_{self.timestep}.png"
         
-        plt.scatter(x2, y2, s=550, c='purple')
-        plt.scatter(x1, y1, s=450, c='red')    
         
+        plt.scatter(x2, y2, s=550, c='yellow')
+        plt.scatter(x1, y1, s=450, c='red')    
         plt.savefig(filename)
         plt.show()
 
