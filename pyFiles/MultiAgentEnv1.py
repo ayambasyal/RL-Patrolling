@@ -7,6 +7,7 @@ from gymnasium.spaces import Discrete
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector, wrappers
 import matplotlib.pyplot as plt
+from pettingzoo.test import parallel_api_test
 
 class CustomEnvironment(ParallelEnv):
     
@@ -25,6 +26,7 @@ class CustomEnvironment(ParallelEnv):
             # 1. Create empty dictionary
         self.node_dict = {}
         self.node_inv_dict = {}
+        self.timestep = 0
         
             # 2. relating the key to the value of the node
         for key,value in enumerate(self.node_list):
@@ -50,7 +52,7 @@ class CustomEnvironment(ParallelEnv):
             agent: Discrete(self.g_no_node**len(self.possible_agents)) for agent in self.possible_agents
         }
         
-        self.agents = self.possible_agents
+        self.agents = [i for i in self.possible_agents]
         self.infos = {agent: {} for agent in self.agents}
         self.state = {agent: None for agent in self.agents}
         
@@ -72,12 +74,19 @@ class CustomEnvironment(ParallelEnv):
         # sets the police to position 9
         self.state['player_1'] = self.node_dict[9]
         
+        #forced by testing api
+        self.action_spaces = self._action_spaces
+        self.observation_spaces = self._observation_spaces
         
-    def reset(self, seed=None, options=None):
-        self.timestep = None
+        self.terminations = {a:False for a in self.possible_agents}
+        
+        
+    def reset(self, seed=None, options=None,return_info=None):
+        self.timestep = 0
         self.state = {agent: None for agent in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.step_now = 0
+        self.agents = [i for i in self.possible_agents]
         
         # sets the thief to position 6
         self.state['player_0'] = self.node_dict[6]
@@ -91,7 +100,7 @@ class CustomEnvironment(ParallelEnv):
         # observation returns the next state of the agents
         # for each action selected for the agent the observations sould be sent back
         # the impletentation is bad change if possible
-        terminations = False
+        terminations = self.terminations 
         rewards = {"player_0":None, "player_1":None}
         # taking the actions (input) 
         thief_action = actions["player_0"]
@@ -113,38 +122,53 @@ class CustomEnvironment(ParallelEnv):
                 temp_neighbours.append(neighbour)
     
             if actions[agent] < len([i for i in self.g_env.neighbors(self.state[agent])]):
-                rewards[agent] = -2;
+                rewards[agent] = -4;
                 self.state[agent] = temp_neighbours[actions[agent]]
                 self.step_now += 1
 
             elif actions[agent] == len([i for i in self.g_env.neighbors(self.state[agent])]):
-                rewards[agent] = -1;
+                rewards[agent] = -2;
+#                 print('no move action')
                 self.step_now += 1
             else:
                 rewards[agent] = -10;
-                
+        
+            
+        # updating states of thief and police
+        thief_state = self.state['player_0']
+        police_state = self.state['player_1']
+        
+        
+        # reward for catching the thief and         
             # checking for terminations
-            # nice one
-#             for index in possible_thief:
-#                 for i in range(len(possible_police)):
-#                     if(index == possible_police[i]):
-#                         terminations = True;    
-            if(police_state == thief_state):
-                terminations = True
-            for index in possible_thief:
-                if(index == police_state):
-                    terminations = True;
-        
-        # extra reward for thief for running away
-        if (self.step_now>7):
-                rewards['player_0'] += 20
-                rewards['player_1'] -= 20
+            # nice one  
+        if(police_state == thief_state):
+            terminations = {a:True for a in self.possible_agents}
+#             print('reward provided')
+            rewards['player_1'] += 200
+
         # Get dummy infos (not used in this example)
-        infos = {a: {} for a in self.agents}
-        observations = {a: self.state[a] for a in self.agents}
-        truncations = {a: None for a in self.agents}
+        infos = {a: {} for a in self.possible_agents}
+        observations = {a: self.state[a] for a in self.possible_agents}
+        truncations = {a: False for a in self.possible_agents}
         
+        # Check truncation conditions (overwrites termination conditions)
+        if self.timestep > 100:
+            rewards = {"player_0": 0, "player_1": 0}
+            truncations = {"player_0": True, "player_1": True}
+            self.agents = []
+        self.timestep += 1
+        
+        
+        temp_agents = [agent for agent in self.agents]
+        
+        # remove terminated agents
+        for agent in self.agents:
+            if terminations[agent] == True :
+                temp_agents.remove(agent)
+        self.agents = temp_agents
         return observations, rewards, terminations, truncations, infos
+    
     
     def render(self):
         pass
@@ -158,7 +182,7 @@ class CustomEnvironment(ParallelEnv):
         x1,y1 = self.node_positions[str(self.state['player_0'])]
         x2,y2 = self.node_positions[str(self.state['player_1'])]
         
-        filename = f"images/Multi_{episode}_{self.step_now}.png"
+        filename = f"images/Multi_{episode}_{self.timestep}.png"
         
         plt.scatter(x2, y2, s=550, c='purple')
         plt.scatter(x1, y1, s=450, c='red')    
@@ -177,3 +201,8 @@ class CustomEnvironment(ParallelEnv):
     
     def possible_move_range(self,player):
         return len(list(self.g_env.neighbors(self.state[player])))
+    def show_node_num(self):
+        node = []
+        for agent in self.possible_agents:
+            node.append([agent,self.node_inv_dict[self.state[agent]]])
+        return node 
