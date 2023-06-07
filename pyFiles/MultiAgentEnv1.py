@@ -82,11 +82,12 @@ class CustomEnvironment(ParallelEnv):
         
         
     def reset(self, seed=None, options=None,return_info=None):
+        self.agents = [i for i in self.possible_agents]
         self.timestep = 0
         self.state = {agent: None for agent in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.step_now = 0
-        self.agents = [i for i in self.possible_agents]
+        
         
         # sets the thief to position 6
         self.state['player_0'] = self.node_dict[6]
