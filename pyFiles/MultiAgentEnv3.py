@@ -38,7 +38,7 @@ class CustomEnvironment(ParallelEnv):
         self.max_steps = 100
         self.step_now = 0
         
-        self.no_of_thieves = 1
+        self.no_of_thieves = 2
         self.no_of_police = 3 
         self.possible_thieves = ['thief_'+str(r) for r in range (self.no_of_thieves)]
         self.possible_police = ['police_'+str(r) for r in range (self.no_of_police)]
@@ -134,6 +134,8 @@ class CustomEnvironment(ParallelEnv):
 
         self.step_now += 1
         self.terminations  = terminations
+        
+        
         
         # Get dummy infos (not used in this example)
         infos = {a: {} for a in self.agents}
