@@ -12,7 +12,7 @@ from pettingzoo.test import parallel_api_test
 class CustomEnvironment(ParallelEnv):
     
     metadata = {
-        "name": "custom_graph_environment_v1",
+        "name": "custom_graph_environment_v3",
     }
     def __init__(self):
         # this is the graph
@@ -102,7 +102,7 @@ class CustomEnvironment(ParallelEnv):
         # observation returns the next state of the agents
         # for each action selected for the agent the observations sould be sent back
         # the impletentation is bad change if possible
-        terminations = self.terminations        
+        terminations = self.terminations.copy()        
         rewards = {}
 #         for agent in self.possible_agents:
 #             rewards[agent] = None  
@@ -115,32 +115,24 @@ class CustomEnvironment(ParallelEnv):
                 temp_neighbours.append(neighbour)
     
             if actions[agent] < len(list(self.g_env.neighbors(self.state[agent]))):
-                rewards[agent] = -2;
+                rewards[agent] = -5;
                 self.state[agent] = temp_neighbours[actions[agent]]
                 
             elif actions[agent] == len(list(self.g_env.neighbors(self.state[agent]))):
-                rewards[agent] = -1;
+                rewards[agent] = -10;
                 
             else:
                 rewards[agent] = -10;
-                
-#         extra reward for thief for running away
-#         if (self.step_now>7):
-#             for thief in self.possible_thieves:
-#                 rewards[thief] += 20
-#             for police in self.possible_police:
-#                 rewards[police] -= 20
 
         self.step_now += 1
-        self.terminations  = terminations
         
         
         
         # Get dummy infos (not used in this example)
         infos = {a: {} for a in self.agents}
         observations = {a: self.state[a] for a in self.agents}
-        truncations = {a: None for a in self.agents}
-        terminations = {a: False for a in self.agents}
+        truncations = {a: None for a in self.possible_agents}
+        terminations = {a: False for a in self.possible_agents}
         
         self.agents = agents
         
@@ -151,7 +143,7 @@ class CustomEnvironment(ParallelEnv):
                 for police in self.possible_police:
                     if self.state[police] == self.state[thief]:
                         terminations[thief] = True
-                        rewards[police] = 10 
+                        rewards[police] = 100 
         
         # agents exist if alive/not terminated
         for i in self.agents:
@@ -159,6 +151,8 @@ class CustomEnvironment(ParallelEnv):
                 agents.remove(i)
         self.agents = agents
             
+        
+        self.terminations  = terminations.copy()
         return observations, rewards, terminations, truncations, infos
     
     def render(self):
