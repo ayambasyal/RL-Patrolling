@@ -16,6 +16,7 @@ class CustomEnvironment(ParallelEnv):
     }
     def __init__(self):
         # this is the graph
+        self.steps = 0
         self.g_env = nx.read_graphml('g1.gml')
         self.g_no_node = len(self.g_env.nodes())
         self.node_list = list(self.g_env.nodes())
@@ -82,6 +83,7 @@ class CustomEnvironment(ParallelEnv):
         
         
     def reset(self, seed=None, options=None):
+        self.steps = 0
         self.agents = [i for i in self.possible_agents]
         self.timestep = None
         self.state = {agent: None for agent in self.possible_agents}
@@ -98,6 +100,7 @@ class CustomEnvironment(ParallelEnv):
         return self.state
 
     def step(self, actions):
+        self.steps = self.steps + 1
         
         # observation returns the next state of the agents
         # for each action selected for the agent the observations sould be sent back
@@ -123,17 +126,9 @@ class CustomEnvironment(ParallelEnv):
                 
             else:
                 rewards[agent] = -10;
-                
-#         extra reward for thief for running away
-#         if (self.step_now>7):
-#             for thief in self.possible_thieves:
-#                 rewards[thief] += 20
-#             for police in self.possible_police:
-#                 rewards[police] -= 20
 
-        self.step_now += 1
-        self.terminations  = terminations
         
+        self.terminations  = terminations
         
         
         # Get dummy infos (not used in this example)
@@ -157,6 +152,7 @@ class CustomEnvironment(ParallelEnv):
             if terminations[i] == True:
                 agents.remove(i)
         self.agents = agents
+        self.step_now += 1
             
         return observations, rewards, terminations, truncations, infos
     
@@ -166,9 +162,9 @@ class CustomEnvironment(ParallelEnv):
 
     def temp_render(self,episode):
         
-        nx.draw(self.g_env, self.node_positions,node_size=300)
+        nx.draw(self.g_env.copy(), self.node_positions.copy(),node_size=300)
 
-        nx.draw_networkx_labels(self.g_env, self.node_positions,labels = self.node_inv_dict,font_color='black' )
+        nx.draw_networkx_labels(self.g_env.copy(), self.node_positions.copy(),labels = self.node_inv_dict,font_color='black' )
         
         # drawing the agents
         for agent in self.agents:
@@ -178,7 +174,7 @@ class CustomEnvironment(ParallelEnv):
             elif agent in self.possible_thieves:
                 plt.scatter(x, y, s=450, c='red')
         
-        filename = f"images/Multi_2_Agent{episode}_{self.step_now}.png"
+        filename = f"images/Multi_2_Agent{episode}_{self.steps}.png"
 
         plt.savefig(filename)
         plt.show()
