@@ -12,7 +12,7 @@ from pettingzoo.test import parallel_api_test
 class CustomEnvironment(ParallelEnv):
     
     metadata = {
-        "name": "custom_graph_environment_v3",
+        "name": "custom_graph_environment_2_Agent",
     }
     def __init__(self):
         # this is the graph
@@ -39,10 +39,10 @@ class CustomEnvironment(ParallelEnv):
         self.step_now = 0
         
         self.no_of_thieves = 1
-        self.no_of_police = 2
+        self.no_of_police = 1
         self.possible_thieves = ['thief_'+str(r) for r in range (self.no_of_thieves)]
         self.possible_police = ['police_'+str(r) for r in range (self.no_of_police)]
-        self.possible_agents = self.possible_thieves + self.possible_police
+        self.possible_agents = self.possible_thieves.copy() + self.possible_police.copy()
         self.agent_name_mapping = dict(
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
@@ -73,7 +73,7 @@ class CustomEnvironment(ParallelEnv):
             self.state[thief]= self.node_dict[2]
             
         for police in self.possible_police:
-            self.state[police]= self.node_dict[12]
+            self.state[police]= self.node_dict[13]
             
         #forced by testing api
         self.action_spaces = self._action_spaces
@@ -91,10 +91,10 @@ class CustomEnvironment(ParallelEnv):
 
 #         ran = np.random.randint(0,self.g_no_node)     # later on if you have to start at random places
         for thief in self.possible_thieves:
-            self.state[thief]= self.node_dict[2]
+            self.state[thief]= self.node_dict[5]
             
         for police in self.possible_police:
-            self.state[police]= self.node_dict[10]
+            self.state[police]= self.node_dict[13]
         return self.state
 
     def step(self, actions):
@@ -102,45 +102,45 @@ class CustomEnvironment(ParallelEnv):
         # observation returns the next state of the agents
         # for each action selected for the agent the observations sould be sent back
         # the impletentation is bad change if possible
-        terminations = self.terminations.copy()        
+        terminations = self.terminations 
         rewards = {}
-        for agent in self.possible_agents:
-            rewards[agent] = None  
+#         for agent in self.possible_agents:
+#             rewards[agent] = None  
         agents = self.agents.copy()
-        
+        state = self.state
         # movement of the thief and the police according to the action and their rewards       
         for agent in self.agents:
             temp_neighbours = []
-            for neighbour in self.g_env.neighbors(self.state[agent]):
+            for neighbour in self.g_env.neighbors(state[agent]):
                 temp_neighbours.append(neighbour)
     
-            if actions[agent] < len(list(self.g_env.neighbors(self.state[agent]))):
-                if (agent in self.possible_police):
-                    rewards[agent]  = -10;
-                else:
-                    rewards[agent] = 10
+            if actions[agent] < len([i for i in self.g_env.neighbors(state[agent])]):
+                rewards[agent] = -6;
                 self.state[agent] = temp_neighbours[actions[agent]]
-
-            elif actions[agent] == len(list(self.g_env.neighbors(self.state[agent]))):
-                if (agent in self.possible_police):
-                    rewards[agent]  = -5;
-                else:
-                    rewards[agent] = 10
+                
+            elif actions[agent] == len([i for i in self.g_env.neighbors(state[agent])]):
+                rewards[agent] = -2;
                 
             else:
-                if (agent in self.possible_police):
-                    rewards[agent]  = -100;
-                else:
-                    rewards[agent] = 10
+                rewards[agent] = -10;
+                
+#         extra reward for thief for running away
+#         if (self.step_now>7):
+#             for thief in self.possible_thieves:
+#                 rewards[thief] += 20
+#             for police in self.possible_police:
+#                 rewards[police] -= 20
 
         self.step_now += 1
+        self.terminations  = terminations
         
-
+        
+        
         # Get dummy infos (not used in this example)
         infos = {a: {} for a in self.agents}
         observations = {a: self.state[a] for a in self.agents}
-        truncations = {a: None for a in self.possible_agents}
-        terminations = {a: False for a in self.possible_agents}
+        truncations = {a: None for a in self.agents}
+        terminations = {a: False for a in self.agents}
         self.agents = agents
         
         
@@ -150,7 +150,7 @@ class CustomEnvironment(ParallelEnv):
                 for police in self.possible_police:
                     if self.state[police] == self.state[thief]:
                         terminations[thief] = True
-                        rewards[police] = 10
+                        rewards[police] = 10 
         
         # agents exist if alive/not terminated
         for i in self.agents:
@@ -158,12 +158,6 @@ class CustomEnvironment(ParallelEnv):
                 agents.remove(i)
         self.agents = agents
             
-        
-        self.terminations  = terminations.copy()
-
-        # negative reward for taking time
-        for police in self.possible_police:
-            rewards[police] -= 20
         return observations, rewards, terminations, truncations, infos
     
     def render(self):
@@ -172,7 +166,8 @@ class CustomEnvironment(ParallelEnv):
 
     def temp_render(self,episode):
         
-        nx.draw(self.g_env, self.node_positions,node_size=200)
+        nx.draw(self.g_env, self.node_positions,node_size=300)
+
         nx.draw_networkx_labels(self.g_env, self.node_positions,labels = self.node_inv_dict,font_color='black' )
         
         # drawing the agents
@@ -183,8 +178,8 @@ class CustomEnvironment(ParallelEnv):
             elif agent in self.possible_thieves:
                 plt.scatter(x, y, s=450, c='red')
         
-        filename = f"images/Multi_large_Env{episode}_{self.step_now}.png"
-        
+        filename = f"images/Multi_2_Agent{episode}_{self.step_now}.png"
+
         plt.savefig(filename)
         plt.show()
 
