@@ -7,7 +7,6 @@ Implementing single agent environment where the agent tries to go to the goal st
 ### Step 2 
 Implementing a multi-agent environment where 2 agents try to catch each other
 
-# left to complete 
 ### Step 3 
 The multi-agent environment is set up in a way where the thieves have to choose to rob a house and run away from the cops while the cops have to catch the thieves. The implementation contains one thief and one cop
 
